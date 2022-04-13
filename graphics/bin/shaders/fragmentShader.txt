@@ -1,36 +1,53 @@
 #version 400 core
 
-in vec2 pass_textureCoordinates;
+//data from vertex shader
+in vec2 pass_textureCoords;
 in vec3 surfaceNormal;
 in vec3 toLightVector;
 in vec3 toCameraVector;
+in float visibility;
 
-out vec4 out_Color;
 
-uniform sampler2D modelTexture;
+//final pixel color
+out vec4 outColor;
+
+
+//uniforms
+uniform sampler2D textureSampler;
 uniform vec3 lightColour;
 uniform float shineDamper;
 uniform float reflectivity;
+uniform float useFakeLighting;
+uniform vec3 skyColor;
 
-void main(void){
 
-	vec3 unitNormal = normalize(surfaceNormal);
-	vec3 unitLightVector = normalize(toLightVector);
+void main(void){	
+	vec3 unitNormal = normalize(surfaceNormal); //normalizes normal (changes vec length to 1)
+	vec3 unitLightVector = normalize(toLightVector); //normalize to light vector
 	
-	float nDotl = dot(unitNormal,unitLightVector);
-	float brightness = max(nDotl,0.2);
-	vec3 diffuse = brightness * lightColour;
+	float nDotl = dot(unitNormal,unitLightVector); //evaluates the angle between normal and light to surface vectors
+	float brightness = max(nDotl,0.2); //sets a limit to darkness on objects to 0.2f
+	if(useFakeLighting > 0.5) { //in case we use fake lightning
+		brightness = max(nDotl, 0.65);
+	}
+	vec3 diffuse = brightness * lightColour; //calculate the diffuse from the light to the pixel considering both color and brightness, how much light a point on the entity gets      
 	
-	vec3 unitVectorToCamera = normalize(toCameraVector);
-	vec3 lightDirection = -unitLightVector;
-	vec3 reflectedLightDirection = reflect(lightDirection,unitNormal);
+	vec3 unitVectorToCamera = normalize(toCameraVector); //normalize vector from surface to cam
+	vec3 lightDirection = -unitLightVector; //calculates light direction
+	vec3 reflectedLightDirection = reflect(lightDirection,unitNormal); //calculates reflected light direction
 	
-	float specularFactor = dot(reflectedLightDirection , unitVectorToCamera);
+	float specularFactor = dot(reflectedLightDirection , unitVectorToCamera); //calculates the reflected light from the entity
 	specularFactor = max(specularFactor,0.0);
 	float dampedFactor = pow(specularFactor,shineDamper);
-	vec3 finalSpecular = dampedFactor * reflectivity * lightColour;
+	vec3 finalSpecular = dampedFactor * reflectivity * lightColour; //calculates the reflected light from the object considering the surface reflectivity and shine damper
 	
 
-	out_Color =  vec4(diffuse,1.0) * texture(modelTexture,pass_textureCoordinates) + vec4(finalSpecular,1.0);
-
+	vec4 textureColor = texture(textureSampler, pass_textureCoords); //discard printing in case pixel is transparent
+	if(textureColor.a<0.5){
+		discard;
+	}
+	
+	outColor = vec4(diffuse,1.0) * textureColor + vec4(finalSpecular, 1.0); //calculates final color of the pixel
+	outColor = mix(vec4(skyColor,1),outColor, visibility); //calculates out color with percentage of fog 
 }
+

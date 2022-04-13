@@ -1,91 +1,105 @@
 package renderEngine;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import shaders.StaticShader;
+import toolBox.Maths;
+
 import java.util.Map;
 
-import models.TexturedModel;
-
-import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Matrix4f;
 
-import shaders.StaticShader;
+import models.TexturedModel;
 import entities.Camera;
 import entities.Entity;
 import entities.Light;
 
-public class MasterRenderer {
-	
-	private static final float FOV = 70;
-	private static final float NEAR_PLANE = 0.1f;
-	private static final float FAR_PLANE = 1000;
-	
-	private Matrix4f projectionMatrix;
-	
-	private StaticShader shader = new StaticShader();
-	private EntityRenderer renderer;
-	
-	
-	
-	private Map<TexturedModel,List<Entity>> entities = new HashMap<TexturedModel,List<Entity>>();
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import shaders.TerrainShader;
+import terrains.Terrain;
 
+public class MasterRenderer{
 	
-	public MasterRenderer(){
-		GL11.glEnable(GL11.GL_CULL_FACE);
-		GL11.glCullFace(GL11.GL_BACK);
-		createProjectionMatrix();
-		renderer = new EntityRenderer(shader,projectionMatrix);
+	private static final float RED = 0.3f;
+	private static final float GREEN = 0.8f;
+	private static final float BLUE = 0.8f;
+	
+	private Matrix4f projectionMatrix; //projection matrix for z axis
+	
+	private StaticShader shader = new StaticShader(); //shader
+	private EntityRenderer renderer; //entity renderer
+	
+	private TerrainRenderer terrainRenderer; //terrain renderer
+	private TerrainShader terrainShader = new TerrainShader(); //terrain shader
+	
+	
+	private Map<TexturedModel,List<Entity>> entities = new HashMap<TexturedModel,List<Entity>>(); // hash map of entities, each model gets a batch
+	private List<Terrain> terrains = new ArrayList<Terrain>(); //terrain list
+	
+	public MasterRenderer(){ //constructor
+		enableCulling(); //
+		createProjectionMatrix(); //create a projection Matrix
+		renderer = new EntityRenderer(shader,projectionMatrix); //creates entity renderer
+		terrainRenderer = new TerrainRenderer(terrainShader,projectionMatrix); //creates terrain renderer
 	}
 	
 	public void render(Light sun,Camera camera){
-		prepare();
-		shader.start();
-		shader.loadLight(sun);
-		shader.loadViewMatrix(camera);
-		renderer.render(entities);
-		shader.stop();
+		prepare(); //prepares renderer
+		shader.start(); //starts shader
+		shader.loadSkyColor(RED, GREEN, BLUE);
+		shader.loadLight(sun); //loads sun to shader
+		shader.loadViewMatrix(camera); //loads view Matrix to shader
+		renderer.render(entities); //render entities
+		shader.stop(); //stops shader
+		terrainShader.start(); //starts terrain shader
+		terrainShader.loadSkyColor(RED, GREEN, BLUE);
+		terrainShader.loadLight(sun); //loads sun to terrain shader
+		terrainShader.loadViewMatrix(camera); //loads camera to terrain shader
+		terrainRenderer.render(terrains); //render the terrain
+		terrainShader.stop(); //stops terrain shader
+		//cleans lists from all data
+		terrains.clear();
 		entities.clear();
 	}
 	
+	public void processTerrain(Terrain terrain){ //adds terrain
+		terrains.add(terrain);
+	}
 	
-	public void processEntity(Entity entity){
+	public static void enableCulling() { //print inside parts of entities
+		GL11.glEnable(GL11.GL_CULL_FACE);
+		GL11.glCullFace(GL11.GL_BACK);
+	}
+	
+	public static void disableCulling() { //doesnt print inside parts of entities
+		GL11.glDisable(GL11.GL_CULL_FACE);
+	}
+	
+	public void processEntity(Entity entity){ //adds new entity to hash map, each model gets a batch
 		TexturedModel entityModel = entity.getModel();
 		List<Entity> batch = entities.get(entityModel);
-		if(batch!=null){
+		if(batch!=null){ //adds known model to an existing batch
 			batch.add(entity);
-		}else{
+		}else{ //creates new batch for unknown model
 			List<Entity> newBatch = new ArrayList<Entity>();
 			newBatch.add(entity);
 			entities.put(entityModel, newBatch);		
 		}
 	}
 	
-	public void cleanUp(){
+	public void cleanUp(){ //cleans shaders
 		shader.cleanUp();
+		terrainShader.cleanUp();
 	}
 	
-	public void prepare() {
-		GL11.glEnable(GL11.GL_DEPTH_TEST);
-		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
-		GL11.glClearColor(0.49f, 89f, 0.98f, 1);
+	public void prepare() { //prepares open gl to render
+		GL11.glEnable(GL11.GL_DEPTH_TEST); //tells open gl to print while considering depth aspects
+		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT); //clears gl buffers before printing
+		GL11.glClearColor(RED, GREEN, BLUE, 1); //sets the background color
 	}
 	
-	private void createProjectionMatrix() {
-		float aspectRatio = (float) Display.getWidth() / (float) Display.getHeight();
-		float y_scale = (float) ((1f / Math.tan(Math.toRadians(FOV / 2f))) * aspectRatio);
-		float x_scale = y_scale / aspectRatio;
-		float frustum_length = FAR_PLANE - NEAR_PLANE;
-
-		projectionMatrix = new Matrix4f();
-		projectionMatrix.m00 = x_scale;
-		projectionMatrix.m11 = y_scale;
-		projectionMatrix.m22 = -((FAR_PLANE + NEAR_PLANE) / frustum_length);
-		projectionMatrix.m23 = -1;
-		projectionMatrix.m32 = -((2 * NEAR_PLANE * FAR_PLANE) / frustum_length);
-		projectionMatrix.m33 = 0;
+	private void createProjectionMatrix() { //creates a projection matrix using the method in maths
+		this.projectionMatrix = Maths.createProjectionMatrix();
 	}
-	
-
 }

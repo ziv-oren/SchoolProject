@@ -1,0 +1,44 @@
+#version 400 core
+
+//data that gets in
+in vec3 position;
+in vec2 textureCoords;
+in vec3 normal;
+
+
+//data sent to fragment shader
+out vec2 pass_textureCoords;
+out vec3 surfaceNormal;
+out vec3 toLightVector;
+out vec3 toCameraVector;
+out float visibility;
+
+uniform mat4 transformationMatrix;
+uniform mat4 projectionMatrix;
+uniform mat4 viewMatrix;
+uniform vec3 lightPosition;
+
+const float density = 0.003;
+const float gradient = 3.3;
+
+void main(void){
+	vec4 worldPosition = transformationMatrix * vec4(position,1.0); //calculate state of position
+	vec4 positionRelativeToCamera = viewMatrix * worldPosition; //calculates vector between cam and position
+	gl_Position = projectionMatrix * positionRelativeToCamera; //calculate state of position in openGL camera
+	pass_textureCoords = textureCoords; //pass texture coords
+	
+	
+	surfaceNormal = (transformationMatrix * vec4(normal,0.0)).xyz; //calculates the normal
+	toLightVector = lightPosition - worldPosition.xyz; //calculates the light vector reaching a surface
+	toCameraVector = (inverse(viewMatrix) * vec4(0.0,0.0,0.0,1.0)).xyz - worldPosition.xyz; //calculates the vector from the surface to the camera
+
+
+	float distance = length(positionRelativeToCamera.xyz); //distance between cam and vector
+	visibility = exp(-pow((distance*density),gradient)); //calculates visibility 
+	visibility = clamp(visibility,0,1); //limits visibility between 1-0
+
+
+
+
+
+}
