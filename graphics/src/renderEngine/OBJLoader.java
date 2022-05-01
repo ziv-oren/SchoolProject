@@ -12,6 +12,9 @@ import org.lwjgl.util.vector.Vector3f;
 
 import models.RawModel;
 
+import org.lwjgl.PointerBuffer;
+
+
 public class OBJLoader {
 	
 	public static RawModel loadObjModel(String fileName, Loader loader) { // takes in obj file and returns it RawModel
@@ -61,21 +64,28 @@ public class OBJLoader {
 					normalsArray = new float[vertices.size() * 3];
 					break;
 				}
+				
 			}
-
-			while (line != null) {
+			
+			
+			while (line!=null) {
 				if (!line.startsWith("f ")) {
 					line = reader.readLine();
 					continue;
 				}
 				String[] currentLine = line.split(" ");
-				String[] vertex1 = currentLine[1].split("/");
-				String[] vertex2 = currentLine[2].split("/");
-				String[] vertex3 = currentLine[3].split("/");
 				
-				processVertex(vertex1,indices,textures,normals,textureArray,normalsArray);
-				processVertex(vertex2,indices,textures,normals,textureArray,normalsArray);
-				processVertex(vertex3,indices,textures,normals,textureArray,normalsArray);
+				
+				for(int i = 1; i<currentLine.length ; i++) {
+					processVertex(currentLine[i].split("/"),indices,textures,normals,textureArray,normalsArray);
+					
+				}
+				
+				
+				
+				//end
+				
+				
 				line = reader.readLine();
 			}
 			reader.close();

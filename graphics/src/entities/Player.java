@@ -5,15 +5,16 @@ import org.lwjgl.util.vector.Vector3f;
 
 import models.TexturedModel;
 import renderEngine.DisplayManager;
+import terrains.Terrain;
 
 public class Player extends Entity{
 	
-	private static final float RUN_SPEED = 20;
-	private static final float TURN_SPEED = 160;
+	private static final float RUN_SPEED = 50;
+	private static final float TURN_SPEED = 80;
 	private static final float GRAVITY = -50;
 	private static final float JUMP_POWER = 30;
 	
-	private static final float TERRAIN_HEIGHT = 0;
+	private static final float WATER_LEVEL = 0;
 	
 	private boolean isInAir;
 	
@@ -27,19 +28,23 @@ public class Player extends Entity{
 		// TODO Auto-generated constructor stub
 	}
 	
-	public void move() {
+	public void move(Terrain terrain, float waterLevel) {
 		checkInputs();
 		super.increaseRotation(0, this.currentTurnSpeed * DisplayManager.getFrameTimeSeconds(), 0);
 		float distance = this.currentSpeed * DisplayManager.getFrameTimeSeconds();
 		float dx = (float) (distance * Math.sin(Math.toRadians(super.getRotY())));
 		float dz = (float) (distance * Math.cos(Math.toRadians(super.getRotY())));
+		float terrainHeight = terrain.getHeightOfTerrain(super.getPosition().x + dx, super.getPosition().z + dz);
+		if(terrainHeight<waterLevel-3) {
+			return;
+		}
 		super.increasePosition(dx, 0, dz);
 		upwardsSpeed += GRAVITY * DisplayManager.getFrameTimeSeconds();
 		super.increasePosition(0, upwardsSpeed * DisplayManager.getFrameTimeSeconds(), 0);
-		if(super.getPosition().y<TERRAIN_HEIGHT) {
+		if(super.getPosition().y<terrainHeight) {
 			upwardsSpeed = 0;
 			isInAir = false;
-			super.getPosition().y = TERRAIN_HEIGHT;
+			super.getPosition().y = terrainHeight;
 		}
 	}
 	
@@ -60,9 +65,9 @@ public class Player extends Entity{
 		}
 		
 		if(Keyboard.isKeyDown(Keyboard.KEY_LEFT)) {
-			this.currentTurnSpeed = - TURN_SPEED;
-		}else if(Keyboard.isKeyDown(Keyboard.KEY_RIGHT)){
 			this.currentTurnSpeed = TURN_SPEED;
+		}else if(Keyboard.isKeyDown(Keyboard.KEY_RIGHT)){
+			this.currentTurnSpeed =  - TURN_SPEED;
 		}else {
 			this.currentTurnSpeed = 0;
 		}

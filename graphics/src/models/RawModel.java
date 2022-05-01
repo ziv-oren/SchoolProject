@@ -5,6 +5,7 @@ public class RawModel {
 	private int vaoID; //the identification of the vao that describes the raw model
 	private int vertexCount; //amount of vectors
 	
+	
 	public RawModel(int vaoID , int vertexCount) { //constructor
 		this.vaoID = vaoID;
 		this.vertexCount = vertexCount;
@@ -17,5 +18,6 @@ public class RawModel {
 	public int getVertexCount() { //returns the vertex count
 		return vertexCount;
 	}
+	
 
 }

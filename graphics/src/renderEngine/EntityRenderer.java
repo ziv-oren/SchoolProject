@@ -39,6 +39,7 @@ public class EntityRenderer {
 			for (Entity entity : batch) {
 				prepareInstance(entity); //calculating the data of the entity to be seen
 				GL11.glDrawElements(GL11.GL_TRIANGLES, model.getRawModel().getVertexCount(),GL11.GL_UNSIGNED_INT, 0); //draws the entity
+					
 			}
 			unbindTexturedModel();//unbind a model
 		}

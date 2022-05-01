@@ -14,5 +14,6 @@
 	<classpathentry kind="lib" path="libs/jars/lwjgl_util.jar"/>
 	<classpathentry kind="lib" path="libs/jars/lwjgl.jar"/>
 	<classpathentry kind="lib" path="libs/jars/slick-util.jar"/>
+	<classpathentry kind="lib" path="libs/jars/PNGDecoder.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

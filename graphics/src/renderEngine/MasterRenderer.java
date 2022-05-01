@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Matrix4f;
+import org.lwjgl.util.vector.Vector4f;
 
 import models.TexturedModel;
 import entities.Camera;
@@ -17,13 +18,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import shaders.TerrainShader;
+import skybox.SkyboxRenderer;
 import terrains.Terrain;
 
 public class MasterRenderer{
 	
-	private static final float RED = 0.3f;
-	private static final float GREEN = 0.8f;
-	private static final float BLUE = 0.8f;
+	private static final float RED = 0.5f;
+	private static final float GREEN = 0.6f;
+	private static final float BLUE = 0.67f;
 	
 	private Matrix4f projectionMatrix; //projection matrix for z axis
 	
@@ -37,16 +39,22 @@ public class MasterRenderer{
 	private Map<TexturedModel,List<Entity>> entities = new HashMap<TexturedModel,List<Entity>>(); // hash map of entities, each model gets a batch
 	private List<Terrain> terrains = new ArrayList<Terrain>(); //terrain list
 	
-	public MasterRenderer(){ //constructor
+	private SkyboxRenderer skyboxRenderer;
+	
+	
+	
+	public MasterRenderer(Loader loader){ //constructor
 		enableCulling(); //
 		createProjectionMatrix(); //create a projection Matrix
 		renderer = new EntityRenderer(shader,projectionMatrix); //creates entity renderer
 		terrainRenderer = new TerrainRenderer(terrainShader,projectionMatrix); //creates terrain renderer
+		skyboxRenderer = new SkyboxRenderer(loader, projectionMatrix);
 	}
 	
-	public void render(Light sun,Camera camera){
+	public void render(Light sun,Camera camera, Vector4f clipPlane){
 		prepare(); //prepares renderer
 		shader.start(); //starts shader
+		shader.loadClipPlane(clipPlane);
 		shader.loadSkyColor(RED, GREEN, BLUE);
 		shader.loadLight(sun); //loads sun to shader
 		shader.loadViewMatrix(camera); //loads view Matrix to shader
@@ -54,13 +62,25 @@ public class MasterRenderer{
 		shader.stop(); //stops shader
 		terrainShader.start(); //starts terrain shader
 		terrainShader.loadSkyColor(RED, GREEN, BLUE);
+		terrainShader.loadClipPlane(clipPlane);
 		terrainShader.loadLight(sun); //loads sun to terrain shader
 		terrainShader.loadViewMatrix(camera); //loads camera to terrain shader
 		terrainRenderer.render(terrains); //render the terrain
 		terrainShader.stop(); //stops terrain shader
 		//cleans lists from all data
+		skyboxRenderer.render(camera, RED, GREEN, BLUE, clipPlane);
 		terrains.clear();
 		entities.clear();
+	}
+	
+	public void renderScene(List<Entity> entities, List<Terrain> terrains, Light sun, Camera camera, Vector4f clipPlane) {
+		for(Terrain terrain: terrains) {
+			processTerrain(terrain);
+		}
+		for(Entity entity: entities) {
+			processEntity(entity);
+		}
+		render(sun, camera, clipPlane);
 	}
 	
 	public void processTerrain(Terrain terrain){ //adds terrain

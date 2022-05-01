@@ -17,12 +17,18 @@ uniform mat4 transformationMatrix;
 uniform mat4 projectionMatrix;
 uniform mat4 viewMatrix;
 uniform vec3 lightPosition;
+uniform vec4 plane;
 
 const float density = 0.003;
 const float gradient = 3.3;
 
+
 void main(void){
 	vec4 worldPosition = transformationMatrix * vec4(position,1.0); //calculate state of position
+	
+	gl_ClipDistance[0] = dot(worldPosition, plane);
+	
+	
 	vec4 positionRelativeToCamera = viewMatrix * worldPosition; //calculates vector between cam and position
 	gl_Position = projectionMatrix * positionRelativeToCamera; //calculate state of position in openGL camera
 	pass_textureCoords = textureCoords; //pass texture coords
@@ -36,7 +42,7 @@ void main(void){
 	float distance = length(positionRelativeToCamera.xyz); //distance between cam and vector
 	visibility = exp(-pow((distance*density),gradient)); //calculates visibility 
 	visibility = clamp(visibility,0,1); //limits visibility between 1-0
-
+	
 
 
 

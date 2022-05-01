@@ -1,0 +1,54 @@
+#version 400 core
+
+in vec3 position;
+
+
+out float visibility;
+out vec4 clipSpace;
+out vec2 textureCoords;
+out vec3 toCameraVector;
+out vec3 fromLightVector;
+out float distanceFromR;
+out float distanceFromG;
+out float distanceFromB;
+
+
+uniform mat4 projectionMatrix;
+uniform mat4 viewMatrix;
+uniform mat4 modelMatrix;
+uniform vec3 camPosition;
+uniform vec3 lightPosition;
+
+
+
+const float density = 0.003;
+const float gradient = 3.3;
+
+
+void main(void) {
+	
+	
+	
+	vec4 worldPosition = modelMatrix * vec4(position,1.0); //calculate state of position
+	toCameraVector = camPosition - worldPosition.xyz;
+
+	
+	vec4 positionRelativeToCamera = viewMatrix * worldPosition; //calculates vector between cam and position
+	gl_Position = projectionMatrix * positionRelativeToCamera; //calculate state of position in openGL camera
+	clipSpace = projectionMatrix * viewMatrix * modelMatrix * vec4(position,1.0);
+
+
+	fromLightVector = worldPosition.xyz - lightPosition;
+	
+	
+	distanceFromR = length(vec3(-400.0,0.0,-400.0)-worldPosition.xyz);
+	distanceFromG = length(vec3(0.0,0.0,400.0)-worldPosition.xyz);
+	distanceFromB = length(vec3(400.0,0.0,-400.0)-worldPosition.xyz);
+	
+	float distance = length(positionRelativeToCamera.xyz); //distance between cam and vector
+	visibility = exp(-pow((distance*density),gradient)); //calculates visibility 
+	visibility = clamp(visibility,0,1); //limits visibility between 1-0
+
+	textureCoords = vec2(position.x/2.0 + 0.5, position.z/2.0 + 0.5) * 4.0;
+	
+}
