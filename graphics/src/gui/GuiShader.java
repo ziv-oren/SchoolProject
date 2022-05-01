@@ -12,25 +12,25 @@ import toolBox.Maths;
 public class GuiShader extends ShaderProgram{
 	
 	private static final String VERTEX_FILE = "src/gui/guiVertexShader.txt";
-	private static final String FRAGMENT_FILE = "src/gui/guiboxFragmentShader.txt";
+	private static final String FRAGMENT_FILE = "src/gui/guiFragmentShader.txt";
 	
-	
+	private int location_transformationMatrix;
+
 	public GuiShader() {
 		super(VERTEX_FILE, FRAGMENT_FILE);
 	}
-
+	
+	public void loadTransformation(Matrix4f matrix){
+		super.loadMatrix(location_transformationMatrix, matrix);
+	}
 
 	@Override
 	protected void getAllUniformLocations() {
-		// TODO Auto-generated method stub
-		
+		location_transformationMatrix = super.getUniformLocation("transformationMatrix");
 	}
-
 
 	@Override
 	protected void bindAttributes() {
-		// TODO Auto-generated method stub
-		
+		super.bindAttribute(0, "position");
 	}
-
 }

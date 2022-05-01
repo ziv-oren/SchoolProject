@@ -1,12 +1,16 @@
 package graphics;
 
+import java.awt.desktop.SystemSleepEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
+import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
+import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
 
@@ -14,6 +18,8 @@ import entities.Camera;
 import entities.Entity;
 import entities.Light;
 import entities.Player;
+import gui.GuiRenderer;
+import gui.GuiTexture;
 import models.RawModel;
 import models.TexturedModel;
 import renderEngine.DisplayManager;
@@ -154,7 +160,7 @@ public class MainGameLoop {
 			hFinish = terrain.getHeightOfTerrain(xFinish, zFinish);
 			hPlayer = terrain.getHeightOfTerrain(xPlayer, zPlayer);
 			double distance = Math.pow(Math.pow(xPlayer-xFinish, 2) + Math.pow(hPlayer-hFinish, 2) + Math.pow(zPlayer-zFinish, 2), 0.5);
-			if(hFinish>waterLevel && hPlayer>waterLevel && distance > 800) {
+			if(hFinish>waterLevel && hPlayer>waterLevel && distance > 1200) {
 				break;
 			}
 		}
@@ -178,9 +184,52 @@ public class MainGameLoop {
 		WaterRenderer waterRenderer = new WaterRenderer(loader, waterShader, Maths.createProjectionMatrix(), fbos);
 		Waters waters = new Waters(waterLevel);
 		
+		GuiRenderer guiRenderer = new GuiRenderer(loader);
+		List<GuiTexture> guis = new ArrayList<GuiTexture>();
+		GuiTexture welcomePage = new GuiTexture(loader.loadTexture("welcomePage"), new Vector2f(0.0f,0.0f), new Vector2f(1f,1f));
+		GuiTexture instructionsPage = new GuiTexture(loader.loadTexture("instructions"), new Vector2f(0.0f,0.0f), new Vector2f(1f,1f));
+		
+		guis.add(welcomePage);
+		guiRenderer.render(guis);
+		DisplayManager.updateDisplay();
+		try {
+			TimeUnit.SECONDS.sleep(5);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
+		guis.clear();
+		
+		guis.add(instructionsPage);
+		guiRenderer.render(guis);
+		DisplayManager.updateDisplay();
+		try {
+			TimeUnit.SECONDS.sleep(10);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
+		
+		guis.clear();
+		
+		GuiTexture map = new GuiTexture(loader.loadTexture("enviromentMap"), new Vector2f(0.0f,0.0f), new Vector2f(1f,1f));
+		guis.add(map);
+		
+		GuiTexture finish = new GuiTexture(loader.loadTexture("redX"), new Vector2f(-xFinish/850.0f,zFinish/850.0f), new Vector2f(0.03f,0.03f));
+		guis.add(finish);
+		
+		GuiTexture location = new GuiTexture(loader.loadTexture("bluePoint"), new Vector2f(-xPlayer/850.0f,zPlayer/850.0f), new Vector2f(0.03f,0.03f));
+		guis.add(location);
+		
+		GuiTexture endPage = new GuiTexture(loader.loadTexture("endPage"), new Vector2f(0,0), new Vector2f(1f,1f));
+		
+		
+		
+		Boolean showMap = false;
 		
 		while(!Display.isCloseRequested()){ // main game loop
 			player.move(terrain, waterLevel);
+			location.setPosition(new Vector2f(-player.getPosition().x/850.0f, player.getPosition().z/850.0f));
 			camera.move(); // moves the camera according to pressed keys
 			
 			GL11.glEnable(GL30.GL_CLIP_DISTANCE0);
@@ -204,16 +253,44 @@ public class MainGameLoop {
 			
 			Vector3f playerPosition = player.getPosition();
 			distance = (float) Math.pow(Math.pow(playerPosition.x-xFinish, 2) + Math.pow(playerPosition.y-hFinish, 2) + Math.pow(playerPosition.z-zFinish, 2), 0.5);
-			if(distance<10) {
+			if(distance < 20) {
 				break;
 			}
+			if(Keyboard.isKeyDown(Keyboard.KEY_M)) {
+				try {
+					TimeUnit.MILLISECONDS.sleep(300);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				if(showMap == true) {
+					showMap = false;
+				}else {
+					showMap = true;
+				}
+			}
+			
+			if(showMap) {
+				guiRenderer.render(guis);
+			}
+			
 			
 			DisplayManager.updateDisplay(); //updates the display
 		}
+		guis.add(endPage);
+		guiRenderer.render(guis);
+		DisplayManager.updateDisplay();
+		try {
+			TimeUnit.SECONDS.sleep(10);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		guiRenderer.cleanUp();
 		fbos.cleanUp();
 		waterShader.cleanUp();
 		renderer.cleanUp(); //cleans the display
 		loader.cleanUp(); //cleans the renderer
+		
+		
 		DisplayManager.closeDisplay(); //Shutting down the display
 
 	}
