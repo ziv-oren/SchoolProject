@@ -35,7 +35,7 @@ public class Player extends Entity{
 		float dx = (float) (distance * Math.sin(Math.toRadians(super.getRotY())));
 		float dz = (float) (distance * Math.cos(Math.toRadians(super.getRotY())));
 		float terrainHeight = terrain.getHeightOfTerrain(super.getPosition().x + dx, super.getPosition().z + dz);
-		if(terrainHeight<waterLevel-3) {
+		if(terrainHeight<waterLevel-4.5) {
 			return;
 		}
 		super.increasePosition(dx, 0, dz);

@@ -23,7 +23,7 @@ public class DisplayManager {
 		try {
 			Display.setDisplayMode(new DisplayMode(WIDTH,HEIGHT));
 			Display.create(new PixelFormat(), attribs);
-			Display.setTitle("C1");
+			Display.setTitle("The Amazing Race!");
 		} catch (LWJGLException e) {
 			e.printStackTrace();
 		}

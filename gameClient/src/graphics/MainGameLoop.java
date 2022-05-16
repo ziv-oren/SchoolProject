@@ -252,23 +252,13 @@ public class MainGameLoop {
 		
 		
 		
-		Boolean showMap = false;
+		boolean showMap = false;
 		String status = "inGame";
 	
 		
 		while(true){ // main game loop
-			if(Keyboard.isKeyDown(Keyboard.KEY_M)) {
-				try {
-					TimeUnit.MILLISECONDS.sleep(60);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-				if(showMap == true) {
-					showMap = false;
-				}else {
-					showMap = true;
-				}
-			}
+			showMap = Keyboard.isKeyDown(Keyboard.KEY_M);
+			
 			if(!showMap) {
 				player.move(terrain, waterLevel);
 				camera.move(); // moves the camera according to pressed keys
